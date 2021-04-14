@@ -1,6 +1,7 @@
 use failure::Fallible;
 use serde::{de::Visitor, Deserialize, Deserializer, Serialize, Serializer};
 use std::{
+    convert::TryInto,
     fmt,
     ops::{Add, AddAssign, Mul, MulAssign, Sub, SubAssign},
     str::FromStr,
@@ -114,6 +115,14 @@ impl<'de> Visitor<'de> for Fixed9Visitor {
     {
         v.parse().map_err(E::custom)
     }
+
+    fn visit_f64<E>(self, v: f64) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        let vv = (v * (FIXED9_DECIMALS as f64)).round() as i64;
+        Ok(Fixed9(vv))
+    }
 }
 
 impl<'de> Deserialize<'de> for Fixed9 {
@@ -121,7 +130,7 @@ impl<'de> Deserialize<'de> for Fixed9 {
     where
         D: Deserializer<'de>,
     {
-        deserializer.deserialize_str(Fixed9Visitor {})
+        deserializer.deserialize_any(Fixed9Visitor {})
     }
 }
 

@@ -63,3 +63,12 @@ pub struct Market {
     quote_volume_24h: Fixed9,
     volume_usd_24h: f64,
 }
+
+#[derive(Deserialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct Subaccount {
+    nickname: String,
+    deletable: bool,
+    editable: bool,
+    competition: bool,
+}

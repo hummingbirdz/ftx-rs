@@ -27,6 +27,18 @@ impl<'de> Deserialize<'de> for Dummy {
     }
 }
 
+/// Obtain a list of all subaccounts
+#[derive(Serialize, Clone, Copy, Debug)]
+pub struct Subaccounts;
+
+impl Request for Subaccounts {
+    type Response = Vec<model::Subaccount>;
+
+    const METHOD: Method = Method::GET;
+    const NEEDS_AUTH: bool = true;
+    const API_PATH: &'static str = "/subaccounts";
+}
+
 /// Obtain a list of all assets listed on the exchange
 #[derive(Serialize, Clone, Copy, Debug)]
 pub struct Markets;
@@ -35,6 +47,6 @@ impl Request for Markets {
     type Response = Vec<model::Market>;
 
     const METHOD: Method = Method::GET;
-    const NEEDS_AUTH: bool = false;
+    const NEEDS_AUTH: bool = true;
     const API_PATH: &'static str = "/markets";
 }

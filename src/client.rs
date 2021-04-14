@@ -76,15 +76,21 @@ impl FtxClient {
 
         let timestamp = Utc::now().timestamp_millis();
 
-        let prehash = format!("{}{}{}{}", timestamp, method, api_path, body.unwrap_or("")); // skip the first `/`
+        let prehash = format!(
+            "{}{}{}{}",
+            timestamp,
+            method,
+            api_path.strip_suffix("?").unwrap_or(&api_path),
+            body.unwrap_or("")
+        );
         let mut mac = Hmac::<Sha256>::new_varkey(auth.private_key.as_bytes())
             .map_err(|e| failure::format_err!("{}", e))?;
         mac.update(prehash.as_bytes());
-        let signature = base64::encode(mac.finalize().into_bytes());
+        let signature = hex::encode(mac.finalize().into_bytes());
 
         Ok(builder
             .add_header("FTX-KEY", &auth.public_key)
-            .add_header("FTX-TIMESTAMP", &timestamp.to_string())
+            .add_header("FTX-TS", &timestamp.to_string())
             .add_header("FTX-SIGN", &signature))
     }
 

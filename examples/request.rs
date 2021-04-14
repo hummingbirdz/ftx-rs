@@ -20,7 +20,7 @@ async fn main() -> Fallible<()> {
 
     let c = FtxClient::with_auth(&public_key, &private_key, None)?;
 
-    req(&c, request::Markets).await;
+    req(&c, request::Subaccounts).await;
 
     Ok(())
 }

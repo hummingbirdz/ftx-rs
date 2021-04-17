@@ -1,7 +1,6 @@
 use failure::Fallible;
 use serde::{de::Visitor, Deserialize, Deserializer, Serialize, Serializer};
 use std::{
-    convert::TryInto,
     fmt,
     ops::{Add, AddAssign, Mul, MulAssign, Sub, SubAssign},
     str::FromStr,
@@ -12,6 +11,7 @@ use std::{
 pub struct Fixed9(pub i64);
 
 pub const FIXED9_DECIMALS: i64 = 1_000_000_000; // 10^9
+pub const FIXED9_DECIMALS_FLOAT: f64 = 1_000_000_000f64;
 pub const MULT_TABLE: &[i64] = &[
     1,
     10,
@@ -88,15 +88,7 @@ impl Serialize for Fixed9 {
     where
         S: Serializer,
     {
-        let abs_val = self.0.abs();
-        let decimals = abs_val / FIXED9_DECIMALS;
-        let residual = abs_val % FIXED9_DECIMALS;
-
-        let sign = if self.0 < 0 { "-" } else { "" };
-
-        let v = format!("{}{}.{:09}", sign, decimals, residual);
-
-        serializer.serialize_str(&v)
+        serializer.serialize_f64(self.0 as f64 / FIXED9_DECIMALS_FLOAT)
     }
 }
 
@@ -120,7 +112,7 @@ impl<'de> Visitor<'de> for Fixed9Visitor {
     where
         E: serde::de::Error,
     {
-        let vv = (v * (FIXED9_DECIMALS as f64)).round() as i64;
+        let vv = (v * FIXED9_DECIMALS_FLOAT).round() as i64;
         Ok(Fixed9(vv))
     }
 }

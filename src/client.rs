@@ -30,9 +30,11 @@ pub struct FtxClient {
 }
 
 #[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 struct ResponseSchema<T> {
     success: bool,
     result: T,
+    has_more_data: Option<bool>,
 }
 
 impl FtxClient {
@@ -101,14 +103,16 @@ impl FtxClient {
         let (req, req_path, req_body) = match Q::METHOD {
             Method::GET => {
                 let url = Url::parse_with_params(&url, request.to_url_query())?;
-                debug!("sending GET message, url: {:?}", &url.as_str());
-                (
-                    self.client.request(Q::METHOD, url.as_str()),
-                    url.path().to_owned() + "?" + url.query().unwrap_or(""),
-                    None,
-                )
+                let path = url.path().to_owned();
+                let path = match url.query() {
+                    Some(q) => path + "?" + q,
+                    None => path,
+                };
+                debug!("sending GET message, url: {}", &url.as_str());
+                (self.client.request(Q::METHOD, url.as_str()), path, None)
             }
             Method::POST | Method::DELETE => {
+                let url = Url::parse(&url)?;
                 let request_body = serde_json::to_string(&request)?;
                 debug!(
                     "sending POST message, url: {:?}, body: {:?}",
@@ -116,10 +120,10 @@ impl FtxClient {
                 );
                 (
                     self.client
-                        .request(Q::METHOD, &url)
+                        .request(Q::METHOD, url.as_str())
                         .body(request_body.clone())
                         .header("content-type", "application/json"),
-                    endpoint,
+                    url.path().to_owned(),
                     Some(request_body),
                 )
             }
@@ -143,6 +147,7 @@ impl FtxClient {
     ) -> Fallible<T> {
         if resp.status().is_success() {
             let resp = resp.text().await?;
+            println!("got message: {}", &resp);
             debug!("got message: {}", &resp);
             match from_str::<ResponseSchema<T>>(&resp) {
                 Ok(resp) => {

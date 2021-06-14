@@ -8,17 +8,31 @@ examples expect `FTX_PUBLIC` and `FTX_PRIVATE` environmental variables to be set
 
 # Status:
 Using subaccounts - not implemented
+
 Subaccount api - done
+
 Market data - done
+
 Futures - not implemented
+
 Account/wallet - account info, balance, deposit and withdrawal data
+
 Orders - all except placing and modifying trigger orders
+
 Convert - not implemented
+
 Spot margin - not implemented
+
 Fills - not implemented
+
 Funding payments - not implemented
+
 Leveraged tokens - not implemented
+
 Options - not implemented
+
 Staking - not implemented
+
 Websocket - all except grouped orderbooks and fills
+
 FIX API - not implemented

@@ -10,6 +10,7 @@ use url::Url;
 
 pub mod request;
 mod util;
+mod websocket;
 
 use request::Request;
 use util::{HeaderBuilder, ToUrlQuery};
@@ -21,6 +22,15 @@ struct Auth {
     public_key: String,
     private_key: String,
     subaccount: Option<String>,
+}
+
+impl Auth {
+    fn sign(&self, prehash: &str) -> Fallible<String> {
+        let mut mac = Hmac::<Sha256>::new_varkey(self.private_key.as_bytes())
+            .map_err(|e| failure::format_err!("{}", e))?;
+        mac.update(prehash.as_bytes());
+        Ok(hex::encode(mac.finalize().into_bytes()))
+    }
 }
 
 #[derive(Debug, Clone, Default)]
@@ -82,13 +92,10 @@ impl FtxClient {
             "{}{}{}{}",
             timestamp,
             method,
-            api_path.strip_suffix("?").unwrap_or(&api_path),
+            api_path.strip_suffix('?').unwrap_or(api_path),
             body.unwrap_or("")
         );
-        let mut mac = Hmac::<Sha256>::new_varkey(auth.private_key.as_bytes())
-            .map_err(|e| failure::format_err!("{}", e))?;
-        mac.update(prehash.as_bytes());
-        let signature = hex::encode(mac.finalize().into_bytes());
+        let signature = auth.sign(&prehash)?;
 
         Ok(builder
             .add_header("FTX-KEY", &auth.public_key)

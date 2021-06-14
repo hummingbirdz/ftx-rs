@@ -130,8 +130,8 @@ impl FromStr for Fixed9 {
     type Err = failure::Error;
 
     fn from_str(v: &str) -> Fallible<Self> {
-        let (v, sign): (&str, i64) = if v.starts_with('-') {
-            (&v[1..], -1)
+        let (v, sign): (&str, i64) = if let Some(stripped) = v.strip_prefix('-') {
+            (stripped, -1)
         } else {
             (v, 1)
         };
@@ -146,7 +146,7 @@ impl FromStr for Fixed9 {
             .map_err(|_| failure::format_err!("couldn't parse decimal part of fixed9 value"))?;
         let residual: i64 = match parts.next() {
             Some(value) => {
-                if value == "" {
+                if value.is_empty() {
                     0
                 } else {
                     let value = if value.len() > 9 { &value[..9] } else { value };

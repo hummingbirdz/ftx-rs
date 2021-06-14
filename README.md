@@ -20,5 +20,5 @@ Funding payments - not implemented
 Leveraged tokens - not implemented
 Options - not implemented
 Staking - not implemented
-Websocket - not implemented
+Websocket - all except grouped orderbooks and fills
 FIX API - not implemented

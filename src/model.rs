@@ -2,6 +2,7 @@ use chrono::prelude::*;
 use serde::{Deserialize, Serialize};
 
 mod fixed9;
+pub mod websocket;
 
 pub use fixed9::Fixed9;
 

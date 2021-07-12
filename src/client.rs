@@ -25,6 +25,8 @@ struct Auth {
 }
 
 impl Auth {
+    /// Compute hmacsha256 hash with FTX private key.
+    /// This is used to sign messages sent to the server.
     fn sign(&self, prehash: &str) -> Fallible<String> {
         let mut mac = Hmac::<Sha256>::new_varkey(self.private_key.as_bytes())
             .map_err(|e| failure::format_err!("{}", e))?;

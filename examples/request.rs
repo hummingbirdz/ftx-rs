@@ -15,7 +15,9 @@ async fn req<Q: request::Request + std::fmt::Debug>(c: &FtxClient, req: Q) {
 async fn main() -> Fallible<()> {
     env_logger::init();
 
+    // Your private API key, called `API Secret` in the FTX web interface
     let private_key: String = std::env::var("FTX_PRIVATE").unwrap();
+    // Your public API key, called `API Key` in the FTX web interface
     let public_key: String = std::env::var("FTX_PUBLIC").unwrap();
 
     let c = FtxClient::with_auth(&public_key, &private_key, None)?;

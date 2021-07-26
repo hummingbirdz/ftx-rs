@@ -1,5 +1,5 @@
+use anyhow::{anyhow, Context, Result};
 use chrono::Utc;
-use failure::Fallible;
 use hmac::{Hmac, Mac, NewMac};
 use log::debug;
 use reqwest::{Client, Method, Response};
@@ -27,9 +27,9 @@ struct Auth {
 impl Auth {
     /// Compute hmacsha256 hash with FTX private key.
     /// This is used to sign messages sent to the server.
-    fn sign(&self, prehash: &str) -> Fallible<String> {
-        let mut mac = Hmac::<Sha256>::new_varkey(self.private_key.as_bytes())
-            .map_err(|e| failure::format_err!("{}", e))?;
+    fn sign(&self, prehash: &str) -> Result<String> {
+        let mut mac = Hmac::<Sha256>::new_from_slice(self.private_key.as_bytes())
+            .with_context(|| format!("failed to use FTX private key as a HMAC-SHA256 key"))?;
         mac.update(prehash.as_bytes());
         Ok(hex::encode(mac.finalize().into_bytes()))
     }
@@ -58,7 +58,7 @@ impl FtxClient {
         public_key: &str,
         private_key: &str,
         subaccount: Option<String>,
-    ) -> Fallible<Self> {
+    ) -> Result<Self> {
         Ok(Self {
             auth: Some(Auth {
                 private_key: private_key.into(),
@@ -69,11 +69,11 @@ impl FtxClient {
         })
     }
 
-    pub fn change_subaccount(&mut self, subaccount: Option<String>) -> Fallible<()> {
+    pub fn change_subaccount(&mut self, subaccount: Option<String>) -> Result<()> {
         self.auth
             .as_mut()
             .map(|auth| auth.subaccount = subaccount)
-            .ok_or_else(|| failure::format_err!("missing auth keys"))
+            .ok_or_else(|| anyhow!("no auth data present, can't change subaccount"))
     }
 
     fn attach_auth_headers<B: HeaderBuilder>(
@@ -82,11 +82,11 @@ impl FtxClient {
         method: Method,
         api_path: &str,
         body: Option<&str>,
-    ) -> Fallible<B> {
+    ) -> Result<B> {
         let auth = self
             .auth
             .as_ref()
-            .ok_or_else(|| failure::format_err!("missing auth keys"))?;
+            .ok_or_else(|| anyhow!("missing auth data"))?;
 
         let timestamp = Utc::now().timestamp_millis();
 
@@ -105,7 +105,7 @@ impl FtxClient {
             .add_header("FTX-SIGN", &signature))
     }
 
-    pub async fn request<Q: Request>(&self, request: Q) -> Fallible<Q::Response> {
+    pub async fn request<Q: Request>(&self, request: Q) -> Result<Q::Response> {
         let endpoint = request.render_endpoint();
         let url = format!("{}{}", API_URL, &endpoint);
 
@@ -147,13 +147,15 @@ impl FtxClient {
             req
         };
 
+        println!("{:?}", req);
+
         self.handle_response(req.send().await?).await
     }
 
     async fn handle_response<T: DeserializeOwned + std::fmt::Debug>(
         &self,
         resp: Response,
-    ) -> Fallible<T> {
+    ) -> Result<T> {
         if resp.status().is_success() {
             let resp = resp.text().await?;
             println!("got message: {}", &resp);
@@ -163,21 +165,14 @@ impl FtxClient {
                     if resp.success {
                         Ok(resp.result)
                     } else {
-                        Err(failure::format_err!(
-                            "Success = false in response: {:?}",
-                            resp
-                        ))
+                        Err(anyhow!("success = false in response: {:?}", resp))
                     }
                 }
-                Err(e) => Err(failure::format_err!(
-                    "error {} while deserializing {}",
-                    e,
-                    resp
-                )),
+                Err(e) => Err(anyhow!("error {} while deserializing {}", e, resp)),
             }
         } else {
             let resp_e = resp.error_for_status_ref().unwrap_err();
-            Err(failure::format_err!(
+            Err(anyhow!(
                 "http error: {}; body: {};",
                 resp_e,
                 resp.text().await?

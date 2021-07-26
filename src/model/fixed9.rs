@@ -1,4 +1,4 @@
-use failure::Fallible;
+use anyhow::{Context, Result};
 use serde::{de::Visitor, Deserialize, Deserializer, Serialize, Serializer};
 use std::{
     fmt,
@@ -127,9 +127,9 @@ impl<'de> Deserialize<'de> for Fixed9 {
 }
 
 impl FromStr for Fixed9 {
-    type Err = failure::Error;
+    type Err = anyhow::Error;
 
-    fn from_str(v: &str) -> Fallible<Self> {
+    fn from_str(v: &str) -> Result<Self> {
         let (v, sign): (&str, i64) = if let Some(stripped) = v.strip_prefix('-') {
             (stripped, -1)
         } else {
@@ -143,7 +143,7 @@ impl FromStr for Fixed9 {
             .next()
             .unwrap()
             .parse()
-            .map_err(|_| failure::format_err!("couldn't parse decimal part of fixed9 value"))?;
+            .context("couldn't parse decimal part of fixed9 value")?;
         let residual: i64 = match parts.next() {
             Some(value) => {
                 if value.is_empty() {
@@ -151,9 +151,10 @@ impl FromStr for Fixed9 {
                 } else {
                     let value = if value.len() > 9 { &value[..9] } else { value };
 
-                    value.parse::<i64>().map_err(|_| {
-                        failure::format_err!("couldn't parse float part of fixed9 value")
-                    })? * MULT_TABLE[9 - value.len()]
+                    value
+                        .parse::<i64>()
+                        .context("couldn't parse float part of fixed9 value")?
+                        * MULT_TABLE[9 - value.len()]
                 }
             }
             None => 0,

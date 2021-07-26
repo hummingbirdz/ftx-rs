@@ -1,9 +1,9 @@
-use failure::Fallible;
+use anyhow::Result;
 use ftx_rs::{model, FtxClient};
 use futures::{SinkExt, StreamExt};
 
 #[tokio::main]
-async fn main() -> Fallible<()> {
+async fn main() -> Result<()> {
     env_logger::init();
 
     let private_key: String = std::env::var("FTX_PRIVATE").unwrap();

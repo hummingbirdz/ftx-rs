@@ -1,4 +1,4 @@
-use failure::Fallible;
+use anyhow::{anyhow, Context as AnyhowContext, Result};
 use futures::{
     sink::{Sink, SinkExt},
     stream::Stream,
@@ -30,7 +30,7 @@ pub struct FtxWebsocket {
 }
 
 impl FtxClient {
-    pub async fn websocket(&self) -> Fallible<FtxWebsocket> {
+    pub async fn websocket(&self) -> Result<FtxWebsocket> {
         let request = HttpRequest::builder()
             .uri(WS_URL)
             .header("user-agent", "ftx-rs");
@@ -40,11 +40,11 @@ impl FtxClient {
         Ok(FtxWebsocket { stream })
     }
 
-    pub async fn send_ws_auth_msg(&self, ws: &mut FtxWebsocket) -> Fallible<()> {
+    pub async fn send_ws_auth_msg(&self, ws: &mut FtxWebsocket) -> Result<()> {
         let auth = self
             .auth
             .as_ref()
-            .ok_or_else(|| failure::format_err!("missing auth keys"))?;
+            .ok_or_else(|| anyhow!("missing auth keys"))?;
 
         let timestamp = chrono::Utc::now().timestamp_millis();
 
@@ -65,26 +65,24 @@ impl FtxClient {
 }
 
 impl Stream for FtxWebsocket {
-    type Item = Fallible<WsInMessage>;
+    type Item = Result<WsInMessage>;
 
     fn poll_next(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Option<Self::Item>> {
         let this = self.project();
         let poll = this.stream.poll_next(cx);
-        poll.map(|msg| msg.map(|msg| msg.map_err(failure::Error::from).and_then(parse_message)))
+        poll.map(|msg| msg.map(|msg| msg.map_err(anyhow::Error::from).and_then(parse_message)))
     }
 }
 
-fn parse_message(msg: TungsteniteWSMessage) -> Fallible<WsInMessage> {
+fn parse_message(msg: TungsteniteWSMessage) -> Result<WsInMessage> {
     let msg = match msg {
         TungsteniteWSMessage::Text(msg) => msg,
-        TungsteniteWSMessage::Binary(_) => {
-            return Err(failure::format_err!("Unexpected binary contents"))
-        }
+        TungsteniteWSMessage::Binary(_) => return Err(anyhow!("unexpected binary contents")),
         TungsteniteWSMessage::Pong(..) => {
-            return Err(failure::format_err!("Recieved pong in unexpected format"))
+            return Err(anyhow!("recieved pong in unexpected format"))
         }
         TungsteniteWSMessage::Ping(..) => {
-            return Err(failure::format_err!("Recieved ping in unexpected format"))
+            return Err(anyhow!("recieved ping in unexpected format"))
         }
         TungsteniteWSMessage::Close(..) => {
             return Ok(WsInMessage::Closed);
@@ -93,12 +91,11 @@ fn parse_message(msg: TungsteniteWSMessage) -> Fallible<WsInMessage> {
 
     debug!("Incoming websocket message {}", msg);
 
-    serde_json::from_str(&msg)
-        .map_err(|e| failure::format_err!("could not deserialize {}, error: {:#?}", msg, e))
+    serde_json::from_str(&msg).with_context(|| format!("could not deserialize {}", msg))
 }
 
 impl<'a> Sink<WsOutMessage<'a>> for FtxWebsocket {
-    type Error = failure::Error;
+    type Error = anyhow::Error;
 
     fn poll_ready(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>> {
         let this = self.project();

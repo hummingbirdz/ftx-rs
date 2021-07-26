@@ -1,4 +1,4 @@
-use failure::Fallible;
+use anyhow::Result;
 #[allow(unused_imports)]
 use ftx_rs::{model, request, Fixed9, FtxClient};
 
@@ -12,7 +12,7 @@ async fn req<Q: request::Request + std::fmt::Debug>(c: &FtxClient, req: Q) {
 }
 
 #[tokio::main]
-async fn main() -> Fallible<()> {
+async fn main() -> Result<()> {
     env_logger::init();
 
     // Your private API key, called `API Secret` in the FTX web interface

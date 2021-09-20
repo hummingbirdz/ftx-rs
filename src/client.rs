@@ -180,3 +180,41 @@ impl FtxClient {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use serde_json::{from_str, to_string};
+    use crate::model::SubaccountTransferResult;
+    use rust_decimal::Decimal;
+    use rust_decimal::prelude::FromStr;
+    use crate::request::{ModifyOrder, OrderRequestId};
+
+    #[test]
+    fn decimal_deserialisation() {
+        let decimal = "1.234599345987983745987345";
+        let json = format!(r#"{{
+        "id": 1234,
+        "coin": "BTC",
+        "size": {},
+        "time": "2020-09-01T12:00:00.000Z",
+        "notes": "some notes"
+        }}"#, decimal);
+
+        let result = from_str::<SubaccountTransferResult>(json.as_str())
+            .unwrap();
+        assert_eq!(Decimal::from_str(decimal).unwrap(), result.size);
+    }
+
+    #[test]
+    fn decimal_serialization() {
+        let decimal = "1.234599345987983745987345";
+        let order = ModifyOrder {
+            order_request_id: OrderRequestId::Client("client"),
+            price: Option::Some(Decimal::from_str(decimal).unwrap()),
+            size: Option::None,
+            client_id: Option::None,
+        };
+        let result = to_string::<ModifyOrder>(&order).unwrap();
+        assert_eq!(format!(r#"{{"price":{},"size":null,"clientId":null}}"#, decimal), result);
+    }
+}

@@ -1,12 +1,11 @@
 use chrono::prelude::*;
 use serde::{Deserialize, Serialize};
 
-mod fixed9;
 pub mod websocket;
 
-pub use fixed9::Fixed9;
+use rust_decimal::Decimal;
 
-pub type PriceQty = (Fixed9, Fixed9);
+pub type PriceQty = (Decimal, Decimal);
 
 #[derive(Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase", tag = "type")]
@@ -30,15 +29,15 @@ pub struct Market {
     #[serde(flatten)]
     pub type_: MarketType,
     pub enabled: bool,
-    pub ask: Fixed9,
-    pub bid: Fixed9,
-    pub price: Fixed9,
-    pub last: Fixed9,
+    pub ask: Decimal,
+    pub bid: Decimal,
+    pub price: Decimal,
+    pub last: Decimal,
     pub post_only: bool,
-    pub price_increment: Fixed9,
-    pub size_increment: Fixed9,
+    pub price_increment: Decimal,
+    pub size_increment: Decimal,
     pub restricted: bool,
-    pub min_provide_size: Fixed9,
+    pub min_provide_size: Decimal,
     pub high_leverage_fee_exempt: bool,
     pub change_1h: f64,
     pub change_24h: f64,
@@ -62,7 +61,7 @@ pub struct Subaccount {
 pub struct SubaccountTransferResult {
     pub id: u64,
     pub coin: String,
-    pub size: Fixed9,
+    pub size: Decimal,
     pub time: DateTime<Utc>,
     pub notes: String,
 }
@@ -80,8 +79,8 @@ pub struct Trade {
     pub id: u64,
     pub liquidation: bool,
     pub side: OrderSide,
-    pub size: Fixed9,
-    pub price: Fixed9,
+    pub size: Decimal,
+    pub price: Decimal,
     pub time: DateTime<Utc>,
 }
 
@@ -113,10 +112,10 @@ pub enum TimeResolution {
 #[derive(Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct HistoricalPrice {
-    pub close: Fixed9,
-    pub high: Fixed9,
-    pub low: Fixed9,
-    pub open: Fixed9,
+    pub close: Decimal,
+    pub high: Decimal,
+    pub low: Decimal,
+    pub open: Decimal,
     pub start_time: DateTime<Utc>,
     pub volume: f64,
 }
@@ -125,11 +124,11 @@ pub struct HistoricalPrice {
 #[serde(rename_all = "camelCase")]
 pub struct Balance {
     pub coin: String,
-    pub free: Fixed9,
-    pub total: Fixed9,
+    pub free: Decimal,
+    pub total: Decimal,
     pub usd_value: f64,
-    pub spot_borrow: Fixed9,
-    pub available_without_borrow: Fixed9,
+    pub spot_borrow: Decimal,
+    pub available_without_borrow: Decimal,
 }
 
 #[derive(Deserialize, Clone, Debug)]
@@ -137,8 +136,8 @@ pub struct Balance {
 pub struct AccountInformation {
     pub username: String,
     pub backstop_provider: bool,
-    pub collateral: Fixed9,
-    pub free_collateral: Fixed9,
+    pub collateral: Decimal,
+    pub free_collateral: Decimal,
     pub leverage: f64,
     pub initial_margin_requirement: f64,
     pub liquidating: bool,
@@ -209,7 +208,7 @@ pub enum DepositStatus {
 pub enum TransactionType {
     #[serde(rename_all = "camelCase")]
     Normal {
-        fee: Fixed9,
+        fee: Decimal,
         status: DepositStatus,
         confirmations: u32,
         sent_time: DateTime<Utc>,
@@ -225,7 +224,7 @@ pub enum TransactionType {
 pub struct TransactionHistoryEntry {
     pub coin: String,
     pub id: u64,
-    pub size: Fixed9,
+    pub size: Decimal,
     pub time: DateTime<Utc>,
     pub notes: Option<String>,
     #[serde(flatten)]
@@ -255,11 +254,11 @@ pub struct Order {
     pub created_at: DateTime<Utc>,
     pub type_: OrderType,
     pub side: OrderSide,
-    pub price: Fixed9,
-    pub size: Fixed9,
-    pub filled_size: Fixed9,
-    pub remaining_size: Fixed9,
-    pub avg_fill_price: Option<Fixed9>,
+    pub price: Decimal,
+    pub size: Decimal,
+    pub filled_size: Decimal,
+    pub remaining_size: Decimal,
+    pub avg_fill_price: Option<Decimal>,
     pub status: OrderStatus,
     pub future: Option<String>,
     pub reduce_only: bool,
@@ -282,8 +281,8 @@ pub enum TriggerOrderTypeInfo {
     Stop,
     #[serde(rename_all = "camelCase")]
     TrailingStop {
-        trail_start: Fixed9,
-        trail_value: Fixed9,
+        trail_start: Decimal,
+        trail_value: Decimal,
     },
     TakeProfit,
 }
@@ -294,7 +293,7 @@ pub enum TriggerUnderlyingOrderTypeInfo {
     Market,
     #[serde(rename_all = "camelCase")]
     Limit {
-        order_price: Fixed9,
+        order_price: Decimal,
     },
 }
 
@@ -316,11 +315,11 @@ pub struct TriggerOrder {
     pub type_: TriggerOrderTypeInfo,
     #[serde(flatten)]
     pub underlying_order_type: TriggerUnderlyingOrderTypeInfo,
-    pub trigger_price: Fixed9,
+    pub trigger_price: Decimal,
     pub side: OrderSide,
-    pub size: Fixed9,
-    pub filled_size: Fixed9,
-    pub avg_fill_price: Option<Fixed9>,
+    pub size: Decimal,
+    pub filled_size: Decimal,
+    pub avg_fill_price: Option<Decimal>,
     pub status: TriggerOrderStatus,
     // None if hasn't been triggered yet
     pub triggered_at: Option<DateTime<Utc>>,
@@ -335,8 +334,8 @@ pub struct TriggerOrder {
 pub enum TriggerInfo {
     #[serde(rename_all = "camelCase")]
     Success {
-        order_size: Fixed9,
-        filled_size: Fixed9,
+        order_size: Decimal,
+        filled_size: Decimal,
         order_id: u64,
     },
     Error {

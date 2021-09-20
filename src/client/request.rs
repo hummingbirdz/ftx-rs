@@ -3,7 +3,8 @@ use std::collections::HashMap;
 use reqwest::Method;
 use serde::{de::DeserializeOwned, Serialize};
 
-use crate::model::{self, Fixed9};
+use crate::model::{self};
+use rust_decimal::Decimal;
 
 pub trait Request: Serialize {
     type Response: DeserializeOwned + std::fmt::Debug;
@@ -101,7 +102,7 @@ impl<'a> Request for SubaccountBalances<'a> {
 #[derive(Serialize, Clone, Copy, Debug)]
 pub struct SubaccountTransfer<'a> {
     pub coin: &'a str,
-    pub size: Fixed9,
+    pub size: Decimal,
     pub source: &'a str,
     pub destination: &'a str,
 }
@@ -421,7 +422,7 @@ impl Request for Triggers {
 #[derive(Serialize, Clone, Copy, Debug)]
 #[serde(rename_all = "snake_case", tag = "type")]
 pub enum PlaceOrderTypeInfo {
-    Limit { price: Fixed9 },
+    Limit { price: Decimal },
     Market,
 }
 
@@ -432,7 +433,7 @@ pub struct PlaceOrder<'a> {
     pub side: model::OrderSide,
     #[serde(flatten)]
     pub type_: PlaceOrderTypeInfo,
-    pub size: Fixed9,
+    pub size: Decimal,
     pub reduce_only: bool,
     pub ioc: bool,
     pub post_only: bool,
@@ -482,8 +483,8 @@ impl<'a> Request for OrderStatus<'a> {
 pub struct ModifyOrder<'a> {
     #[serde(skip)]
     pub order_request_id: OrderRequestId<'a>,
-    pub price: Option<Fixed9>,
-    pub size: Option<Fixed9>,
+    pub price: Option<Decimal>,
+    pub size: Option<Decimal>,
     pub client_id: Option<&'a str>,
 }
 

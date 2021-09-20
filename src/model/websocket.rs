@@ -3,7 +3,8 @@ use std::collections::HashMap;
 use chrono::prelude::*;
 use serde::{Deserialize, Serialize};
 
-use crate::model::{self, Fixed9, PriceQty};
+use crate::model::{self, PriceQty};
+use rust_decimal::Decimal;
 
 #[derive(Debug, Clone, Serialize)]
 pub struct LoginArgs<'a> {
@@ -48,8 +49,8 @@ pub struct Market {
     #[serde(flatten)]
     pub type_: model::MarketType,
     pub enabled: bool,
-    pub price_increment: Fixed9,
-    pub size_increment: Fixed9,
+    pub price_increment: Decimal,
+    pub size_increment: Decimal,
     pub restricted: bool,
 }
 
@@ -60,16 +61,16 @@ pub struct Markets {
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct Ticker {
-    pub bid: Option<Fixed9>,
-    pub ask: Option<Fixed9>,
-    pub last: Option<Fixed9>,
+    pub bid: Option<Decimal>,
+    pub ask: Option<Decimal>,
+    pub last: Option<Decimal>,
     pub time: f64,
 }
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct Trade {
-    pub price: Fixed9,
-    pub size: Fixed9,
+    pub price: Decimal,
+    pub size: Decimal,
     // side of the taker
     pub side: model::OrderSide,
     pub liquidation: bool,

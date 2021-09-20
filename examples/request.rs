@@ -1,6 +1,6 @@
 use anyhow::Result;
 #[allow(unused_imports)]
-use ftx_rs::{model, request, Fixed9, FtxClient};
+use ftx_rs::{model, request, FtxClient};
 
 async fn req<Q: request::Request + std::fmt::Debug>(c: &FtxClient, req: Q) {
     let s = format!("{:#?}", req);

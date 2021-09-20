@@ -12,14 +12,14 @@ url = "2.1"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1"
 
-failure = "0.1"
-hmac = "0.10"
+anyhow = "1.0"
+hmac = { version = "0.11", features = ["std"] }
 base64 = "0.13"
 sha2 = "0.9"
 hex = "0.4"
 
 tokio = "1"
-tokio-tungstenite = { version = "0.13", features = ["connect", "tls"] }
+tokio-tungstenite = { version = "0.15", features = ["connect", "tokio-rustls"] }
 pin-project = "1"
 futures = "0.3"
 
@@ -27,4 +27,4 @@ log = "0.4"
 
 [dev-dependencies]
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
-env_logger = "0.8"
+env_logger = "0.9"
